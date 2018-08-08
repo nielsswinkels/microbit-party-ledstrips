@@ -22,7 +22,7 @@ let snowflakeCounter = 0
 let pos = 0
 // fade mode vars
 let tempColor = 0;
-let fadeColorList = [[100, 0, 0], [50, 50, 50], [50, 0, 0], [255, 128, 128]]
+let fadeColorList = [[73,10,61], [189,21,80], [233,127,2], [248,202,0], [138,155,15]]
 let currentColor = [0, 0, 0]
 let targetColorIndex = 0
 // sparkle mode vars
@@ -55,15 +55,15 @@ for (let i = 0; i < strip.length(); i++) {
 // single flash vars
 let singleFlashDelay = 1
 let singleFlashCounter = 0
-let singleFlashPeriod = 510
+let singleFlashPeriod = 512
 let singleFlashColor = [30, 100, 30]
-let singleFlashStepsize = 1
+let singleFlashStepsize = 5
 // spotlight mode vars
 let spotlightSize = 8
-let spotlightColorList = [[35, 77, 32], [54, 128, 45], [119, 171, 89], [201, 223, 138], [240, 247, 218]]
+let spotlightColorList = [[255,0,60], [255,138,0], [250,190,40], [136,193,0], [0,193,118]]
 let spotlightDelay = 1
 let spotlightCounter = 0
-let spotlightPeriod = 25
+let spotlightPeriod = 35
 // animated separated lights mode
 let aniSeparatedColor = [240, 230, 220]
 let aniSeparatedSpace = 1
@@ -315,7 +315,6 @@ while (true) {
     } else if (mode == MODE_SINGLE_FLASH) {
         // 512 - 255 = 255
         let singleFlashBrightness = Math.abs(singleFlashCounter - singleFlashPeriod / 2)
-        serial.writeLine("" + singleFlashBrightness)
         strip.showColor(neopixel.rgb(singleFlashColor[0] * singleFlashBrightness / 255,
             singleFlashColor[1] * singleFlashBrightness / 255,
             singleFlashColor[2] * singleFlashBrightness / 255))
