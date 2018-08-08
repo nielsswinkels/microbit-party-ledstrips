@@ -3,35 +3,79 @@ radio.setGroup(22)
 radio.setTransmitPower(7)
 let HOLD_DELAY_MAX = 450
 let holdDelay = HOLD_DELAY_MAX // TODO implement minimal hold delay
-let mode = 0 // 0-9
+let randomDelay = 30 // seconds
+let RANDOM_MAX = 120 // seconds
+let randomSwitchTimestamp = 0
+let X_THRESHOLD = 100
+
+let mode = 0
+let MODE_OFF = 0
+let MODE_ON = 1
+let MODE_PARTY = 2
+
+let currentOnSetting = 0
+let onSettings = [
+    "H",
+    "S",
+    "L",
+    "Z"
+]
+let onSettingsValues = [
+    [0, 0, 359],
+    [0, 0, 99],
+    [99, 0, 99],
+    [5, 0, 20]
+]
+
+let currentPartyMode = 0
+let partyModes = [
+    "SNOWFLAKE",
+    "FADE COLORS",
+    "SPARKLE",
+    "RAINBOW",
+    "CAROUSEL",
+    "SINGLE FLASH",
+    "SPOTLIGHTS",
+    "ANIMATED SEPARATED",
+]
+
 let remoteModeIndex = 0
 let remoteModesNames = [
-    [	// MODE_SNOWFLAKE = 0
+    [   // let MODE_OFF = 0
+
+    ],
+    [	// let MODE_SEPARATED = 1
+        "separatedColor-r",
+        "separatedColor-g",
+        "separatedColor-b",
+        "separatedSpace"
+    ],
+    [	// MODE_SNOWFLAKE = 2
         "snowflakeLength",
         "snowflakeCounter"
     ],
-    [	// let MODE_FADE_COLORS = 1
+    [	// let MODE_FADE_COLORS = 3
         "currentColor-r",
         "currentColor-g",
         "currentColor-b",
         "targetColorIndex"
     ],
-    [	// let MODE_SPARKLE = 2
+    [	// let MODE_SPARKLE = 4
         "sparkleColor-r",
         "sparkleColor-g",
         "sparkleColor-b",
         "sparkleDecay",
         "sparkleDelay"
     ],
-    [	// let MODE_RAINBOW = 3
+    [	// let MODE_RAINBOW = 5
         "rainbowCounter",
         "rainbowRange"
     ],
-    [	// let MODE_CAROUSEL = 4
+    [	// let MODE_CAROUSEL = 6
         "carouselCounter",
         "carouselDelay"
     ],
-    [	// let MODE_DROPLET = 5
+    [	// let MODE_DROPLET = 7
         "dropletCounter",
         "dropletPeriod",
         "dropletColor-r",
@@ -40,7 +84,7 @@ let remoteModesNames = [
         "dropletDelay",
         "dropletDecay"
     ],
-    [	// let MODE_SINGLE_FLASH = 6
+    [	// let MODE_SINGLE_FLASH = 8
         "singleFlashDelay",
         "singleFlashCounter",
         "singleFlashPeriod",
@@ -49,19 +93,13 @@ let remoteModesNames = [
         "singleFlashColor-b",
         "singleFlashStepsize"
     ],
-    [	// let MODE_SPOTLIGHTS = 7
+    [	// let MODE_SPOTLIGHTS = 9
         "spotlightSize",
         "spotlightDelay",
         "spotlightCounter",
         "spotlightPeriod"
     ],
-    [	// let MODE_SEPARATED = 8
-        "separatedColor-r",
-        "separatedColor-g",
-        "separatedColor-b",
-        "separatedSpace"
-    ],
-    [	// let MODE_ANIMATED_SEPARATED = 9
+    [	// let MODE_ANIMATED_SEPARATED = 10
         "aniSeparatedColor-r",
         "aniSeparatedColor-g",
         "aniSeparatedColor-b",
@@ -72,32 +110,40 @@ let remoteModesNames = [
 ]
 // mode [default min max]
 let remoteModesValues = [
-    [	// MODE_SNOWFLAKE = 0
+    [   // let MODE_OFF = 0
+    ],
+    [	// let MODE_SEPARATED = 1
+        [100, 0, 255],
+        [100, 0, 255],
+        [100, 0, 255],
+        [5, 0, 200]
+    ],
+    [	// MODE_SNOWFLAKE = 2
         [128, 1, 255],
         [0, 0, 1000]
     ],
-    [	// let MODE_FADE_COLORS = 1
+    [	// let MODE_FADE_COLORS = 3
         [0, 0, 255],
         [0, 0, 255],
         [0, 0, 255],
         [0, 0, 0]
     ],
-    [	// let MODE_SPARKLE = 2
+    [	// let MODE_SPARKLE = 4
         [255, 0, 255],
         [255, 0, 255],
         [255, 0, 255],
         [3, 1, 100],
         [5, 0, 5000]
     ],
-    [	// let MODE_RAINBOW = 3
+    [	// let MODE_RAINBOW = 5
         [0, 0, 1000],
         [60, 0, 720]
     ],
-    [	// let MODE_CAROUSEL = 4
+    [	// let MODE_CAROUSEL = 6
         [0, 0, 1000],
         [400, 0, 5000]
     ],
-    [	// let MODE_DROPLET = 5
+    [	// let MODE_DROPLET = 7
         [0, 0, 1000],
         [35, 0, 1000],
         [255, 0, 255],
@@ -106,7 +152,7 @@ let remoteModesValues = [
         [1, 0, 5000],
         [10, 0, 100]
     ],
-    [	// let MODE_SINGLE_FLASH = 6
+    [	// let MODE_SINGLE_FLASH = 8
         [1, 0, 5000],
         [0, 0, 1000],
         [510, 0, 5000],
@@ -115,19 +161,13 @@ let remoteModesValues = [
         [30, 0, 255],
         [1, 0, 100]
     ],
-    [	// let MODE_SPOTLIGHTS = 7
+    [	// let MODE_SPOTLIGHTS = 9
         [8, 1, 200],
         [1, 0, 5000],
         [0, 0, 1000],
         [25, 0, 500]
     ],
-    [	// let MODE_SEPARATED = 8
-        [30, 0, 255],
-        [100, 0, 255],
-        [30, 0, 255],
-        [5, 0, 200]
-    ],
-    [	// let MODE_ANIMATED_SEPARATED = 9
+    [	// let MODE_ANIMATED_SEPARATED = 10
         [240, 0, 255],
         [230, 0, 255],
         [220, 0, 255],
@@ -137,22 +177,7 @@ let remoteModesValues = [
     ]
 ]
 
-let randomDelay = 0 // 0 means off, otherwise it means seconds
-let RANDOM_MAX = 120 // seconds
-let randomSwitchTimestamp = 0
 
-let MODE_SNOWFLAKE = 0
-let MODE_FADE_COLORS = 1
-let MODE_SPARKLE = 2
-let MODE_RAINBOW = 3
-let MODE_CAROUSEL = 4
-let MODE_DROPLET = 5
-let MODE_SINGLE_FLASH = 6
-let MODE_SPOTLIGHTS = 7
-let MODE_SEPARATED = 8
-let MODE_ANIMATED_SEPARATED = 9
-
-let X_THRESHOLD = 100
 
 input.onButtonPressed(Button.A, () => {
     led.stopAnimation()
@@ -172,147 +197,156 @@ input.onGesture(Gesture.Shake, () => {
 
 
 basic.forever(() => {
-    if (randomDelay > 0 && input.runningTime() - randomSwitchTimestamp > randomDelay * 1000
+    if(mode != MODE_ON) {
+        strip.clear()
+        strip.show()
+    }
+    if (mode == MODE_PARTY && input.runningTime() - randomSwitchTimestamp > randomDelay * 1000
         && isScreenUp()) {
         // we switch to a random mode
         randomSwitchTimestamp = input.runningTime()
-        //mode = Math.random(remoteModesNames.length)
         // making sure we change to a new mode by adding at least 1,
         // and max not enough to come back to the same mode.
-        mode = (mode + 1 + Math.random(remoteModesNames.length - 2)) % remoteModesNames.length
-        radio.sendValue("mode", mode)
+        currentPartyMode = (currentPartyMode + 1 + Math.random(partyModes.length - 2)) % partyModes.length
+        radio.sendValue("mode", currentPartyMode + 2) // +2 because we skip modes off and separated
         basic.showIcon(IconNames.Heart)
-        radio.sendValue("mode", mode)
+        radio.sendValue("mode", currentPartyMode + 2) // send it again
     }
 
     // if a is pressed down
     //  if upside down change mode
     //  else change var
     // if b is pressed change value
-    showColorLeds()
+
+    //showColorLeds()
+
     if (input.buttonIsPressed(Button.A)) {
         if (input.buttonIsPressed(Button.B)) {
             if (isLogoDown()) {
-                radio.sendValue("mode", mode)
-                basic.showString("m:" + mode, 80)
-                basic.pause(500)
+                if (mode == MODE_PARTY) {
+                    radio.sendValue("mode", currentPartyMode + 2)
+                } else {
+                    radio.sendValue("mode", mode)
+                }
+                basic.showIcon(IconNames.Square)
+                basic.pause(100)
             } else {
-                radio.sendValue(clip12(remoteModesNames[mode][remoteModeIndex]), remoteModesValues[mode][remoteModeIndex][0])
+                //radio.sendValue(clip12(remoteModesNames[mode][remoteModeIndex]), remoteModesValues[mode][remoteModeIndex][0])
                 //basic.showString(remoteModesNames[mode][remoteModeIndex] + "=", 80)
                 //basic.showNumber(remoteModesValues[mode][remoteModeIndex][0], 80)
                 basic.pause(500)
             }
         }
-        else if (isLogoDown()) {
-            if (input.acceleration(Dimension.X) < -1 * X_THRESHOLD) {
-                mode = (mode + 1) % remoteModesNames.length
-                radio.sendValue("mode", mode)
-                remoteModeIndex = 0
-                basic.clearScreen()
-                plotLedAt(24 - mode)
-                basic.pause(holdDelay)
-                radio.sendValue("mode", mode)
-            } else if (input.acceleration(Dimension.X) > X_THRESHOLD) {
-                mode = (mode - 1 + remoteModesNames.length) % remoteModesNames.length
-                radio.sendValue("mode", mode)
-                remoteModeIndex = 0
-                basic.clearScreen()
-                plotLedAt(24 - mode)
-                basic.pause(holdDelay)
-                radio.sendValue("mode", mode)
+        else if (isLogoDown()) { // only button a pressed and upside down
+            mode = (mode + 1) % 3
+            if (mode == MODE_PARTY) {
+                radio.sendValue("mode", currentPartyMode + 2)
             } else {
-                basic.clearScreen()
-                plotLedAt(24 - mode)
-                basic.pause(holdDelay)
+                radio.sendValue("mode", mode)
+            }
+            basic.clearScreen()
+            plotLedAt(24 - mode)
+            basic.pause(400)
+            if (mode == MODE_PARTY) {
+                radio.sendValue("mode", currentPartyMode + 2)
+            } else {
+                radio.sendValue("mode", mode)
             }
         }
-        else if (input.acceleration(Dimension.X) < -1 * X_THRESHOLD) {
-            remoteModeIndex = (remoteModeIndex - 1 + remoteModesNames[mode].length) % remoteModesNames[mode].length
-            //basic.showString(remoteModesNames[remoteModeIndex], 50)
-            //whaleysans.showNumber(remoteModeIndex)
-            basic.clearScreen()
-            plotLedAt(remoteModeIndex)
-            basic.pause(holdDelay)
-            //holdDelay -= 10
-        } else if (input.acceleration(Dimension.X) > X_THRESHOLD) {
-            remoteModeIndex = (remoteModeIndex + 1) % remoteModesNames[mode].length
-            //basic.showString(remoteModesNames[remoteModeIndex], 50)
-            //whaleysans.showNumber(remoteModeIndex)
-            basic.clearScreen()
-            plotLedAt(remoteModeIndex)
-            basic.pause(holdDelay)
-            //holdDelay -= 10
-        } else {
-            basic.clearScreen()
-            plotLedAt(remoteModeIndex)
-            basic.pause(holdDelay)
-            //basic.showString(remoteModesNames[mode][remoteModeIndex], 65)
-        }
+        else { // only button a pressed and straight up
+            if (mode == MODE_OFF) {
 
-    } else if (input.buttonIsPressed(Button.B)) {
-        if (isLogoDown()) {
-            if (input.acceleration(Dimension.X) < -1 * X_THRESHOLD) {
+            } else if (mode == MODE_ON) {    // change the current On setting
+                let pitch = input.rotation(Rotation.Pitch)
+                pitch = Math.min(85, Math.max(0, pitch))
+                onSettingsValues[currentOnSetting][0] =
+                    pins.map(
+                        pitch,
+                        85,
+                        0,
+                        onSettingsValues[currentOnSetting][1],
+                        onSettingsValues[currentOnSetting][2]
+                    )
+                
+                switch (currentOnSetting) {
+                    case 0:
+                    case 1:
+                    case 2:
+                        led.plotBarGraph(onSettingsValues[currentOnSetting][0], onSettingsValues[currentOnSetting][2])
+                        // generate color
+                        let sepColor = neopixel.hsl(
+                            onSettingsValues[0][0],
+                            onSettingsValues[1][0],
+                            onSettingsValues[2][0])
+                        strip.showColor(sepColor)
+                        let rgbhsl = convertColorToRgbHsl(sepColor)
+                        // send r g b
+                        radio.sendValue(clip12("separatedColor-r"), rgbhsl.r)
+                        basic.pause(100)
+                        radio.sendValue(clip12("separatedColor-g"), rgbhsl.g)
+                        basic.pause(100)
+                        radio.sendValue(clip12("separatedColor-b"), rgbhsl.b)
+                        basic.pause(100)
+                        break;
+                    case 3:
+                        if (onSettingsValues[currentOnSetting][0] > 9 && onSettingsValues[currentOnSetting][0] < 100) {
+                            whaleysans.showNumber(onSettingsValues[currentOnSetting][0])
+                        } else {
+                            basic.showNumber(onSettingsValues[currentOnSetting][0], 50)
+                        }
+                        // send separated size
+                        radio.sendValue(clip12("separatedSpace"), onSettingsValues[currentOnSetting][0])
+                        basic.pause(100)
+                        break;
+                }
+            } else if (mode == MODE_PARTY) {
                 randomDelay = Math.min(randomDelay + 1, RANDOM_MAX)
-                basic.clearScreen()
-                if (randomDelay > 9) {
-                    whaleysans.showNumber(randomDelay)
-                } else {
-                    basic.showNumber(randomDelay, 80)
-                }
-                basic.pause(holdDelay)
-                holdDelay -= 10
-            } else if (input.acceleration(Dimension.X) > X_THRESHOLD) {
-                randomDelay = Math.max(randomDelay - 1, 0)
-                basic.clearScreen()
-                if (randomDelay > 9) {
-                    whaleysans.showNumber(randomDelay)
-                } else {
-                    basic.showNumber(randomDelay, 80)
-                }
-                basic.pause(holdDelay)
-                holdDelay -= 10
-            } else {
                 basic.clearScreen()
                 if (randomDelay > 9 && randomDelay < 100) {
                     whaleysans.showNumber(randomDelay)
                 } else {
-                    basic.showNumber(randomDelay, 80)
+                    basic.showNumber(randomDelay, 50)
                 }
-                holdDelay = HOLD_DELAY_MAX
                 basic.pause(holdDelay)
+                holdDelay -= 10
             }
-        } else if (input.acceleration(Dimension.X) < -1 * X_THRESHOLD) {
-            remoteModesValues[mode][remoteModeIndex][0] = Math.max(remoteModesValues[mode][remoteModeIndex][0] - 1,
-                remoteModesValues[mode][remoteModeIndex][1])
-            basic.clearScreen()
-            if (remoteModesValues[mode][remoteModeIndex][0] > 9) {
-                whaleysans.showNumber(remoteModesValues[mode][remoteModeIndex][0])
+        }
+
+    } else if (input.buttonIsPressed(Button.B)) { // only button b pressed
+        if (isLogoDown()) {
+            mode = (mode + 2) % 3 // go back one step
+            if (mode == MODE_PARTY) {
+                radio.sendValue("mode", currentPartyMode + 2)
             } else {
-                basic.showNumber(remoteModesValues[mode][remoteModeIndex][0], 80)
+                radio.sendValue("mode", mode)
             }
-            basic.pause(holdDelay)
-            holdDelay -= 20
-        } else if (input.acceleration(Dimension.X) > X_THRESHOLD) {
-            remoteModesValues[mode][remoteModeIndex][0] = Math.min(remoteModesValues[mode][remoteModeIndex][0] + 1,
-                remoteModesValues[mode][remoteModeIndex][2])
             basic.clearScreen()
-            if (remoteModesValues[mode][remoteModeIndex][0] > 9) {
-                whaleysans.showNumber(remoteModesValues[mode][remoteModeIndex][0])
+            plotLedAt(24 - mode)
+            basic.pause(400)
+            if (mode == MODE_PARTY) {
+                radio.sendValue("mode", currentPartyMode + 2)
             } else {
-                basic.showNumber(remoteModesValues[mode][remoteModeIndex][0], 80)
+                radio.sendValue("mode", mode)
             }
-            basic.pause(holdDelay)
-            holdDelay -= 20
-        } else {
-            basic.clearScreen()
-            if (remoteModesValues[mode][remoteModeIndex][0] > 9 && remoteModesValues[mode][remoteModeIndex][0] < 100) {
-                whaleysans.showNumber(remoteModesValues[mode][remoteModeIndex][0])
-            } else {
-                basic.showNumber(remoteModesValues[mode][remoteModeIndex][0], 80)
+        } else {    // b button pressed and straight up
+            if (mode == MODE_OFF) {
+
+            } else if (mode == MODE_ON) {    // next On setting
+                currentOnSetting = (currentOnSetting + 1) % onSettings.length
+                basic.clearScreen()
+                basic.showString(onSettings[currentOnSetting], 50)
+                basic.pause(400)
+            } else if (mode == MODE_PARTY) {
+                randomDelay = Math.max(randomDelay - 1, 1)
+                basic.clearScreen()
+                if (randomDelay > 9 && randomDelay < 100) {
+                    whaleysans.showNumber(randomDelay)
+                } else {
+                    basic.showNumber(randomDelay, 50)
+                }
+                basic.pause(holdDelay)
+                holdDelay -= 10
             }
-            radio.sendValue(clip12(remoteModesNames[mode][remoteModeIndex]), remoteModesValues[mode][remoteModeIndex][0])
-            holdDelay = HOLD_DELAY_MAX
-            basic.pause(holdDelay)
         }
 
     } else {    // no buttons pressed
@@ -321,54 +355,17 @@ basic.forever(() => {
             basic.clearScreen()
             plotLedAt(24 - mode)
             basic.pause(100)
-        } else if (isLogoUp()) {
-            basic.showString(remoteModesNames[mode][remoteModeIndex], 80)
         } else {
-            if (remoteModesValues[mode][remoteModeIndex][0] < 100 && remoteModesValues[mode][remoteModeIndex][0] > 9) {
-                whaleysans.showNumber(remoteModesValues[mode][remoteModeIndex][0])
-            } else {
-                basic.showNumber(remoteModesValues[mode][remoteModeIndex][0], 80)
+            if(mode == MODE_OFF) {
+                basic.showString("OFF", 80);
+            } else if (mode == MODE_ON) {
+                basic.clearScreen()
+                basic.showString(onSettings[currentOnSetting], 50)
+            } else if(mode == MODE_PARTY) {
+                basic.showString(partyModes[currentPartyMode], 80)
             }
         }
     }
-
-
-    /*
-    if (input.buttonIsPressed(Button.A)) {
-        if (isLogoUp()) {
-            remoteModeIndex = (remoteModeIndex - 1 + remoteModesNames.length) % remoteModesNames.length
-            basic.showString(remoteModesNames[remoteModeIndex], 80)
-        } else {
-            remoteModesValues[remoteModeIndex][0] = Math.max(remoteModesValues[remoteModeIndex][0] - 1,
-                remoteModesValues[remoteModeIndex][1])
-            whaleysans.showNumber(remoteModesValues[remoteModeIndex][0])
-        }
-        basic.pause(holdDelay)
-        holdDelay -= 10
-    } else if (input.buttonIsPressed(Button.B)) {
-        if (isLogoUp()) {
-            remoteModeIndex = (remoteModeIndex + 1) % remoteModesNames.length
-            basic.showString(remoteModesNames[remoteModeIndex], 80)
-        } else {
-            remoteModesValues[remoteModeIndex][0] = Math.min(remoteModesValues[remoteModeIndex][0] + 1,
-                remoteModesValues[remoteModeIndex][2])
-            whaleysans.showNumber(remoteModesValues[remoteModeIndex][0])
-        }
-        basic.pause(holdDelay)
-        holdDelay -= 10
-    } else {
-        holdDelay = HOLD_DELAY_MAX
-        if (isLogoUp()) {
-            basic.showString(remoteModesNames[remoteModeIndex], 80)
-        } else {
-            if (remoteModesValues[remoteModeIndex][0] < 100 && remoteModesValues[remoteModeIndex][0] > 9) {
-                whaleysans.showNumber(remoteModesValues[remoteModeIndex][0])
-            } else {
-                basic.showNumber(remoteModesValues[remoteModeIndex][0], 80)
-            }
-        }
-    }
-    */
 })
 let isPressed = false
 control.inBackground(() => {
@@ -381,8 +378,9 @@ control.inBackground(() => {
         }
         else {
             isPressed = false
+            holdDelay = HOLD_DELAY_MAX
         }
-        basic.pause(2)
+        basic.pause(5)
     }
 })
 function isLogoUp(): boolean {
