@@ -1,17 +1,21 @@
 let strip: neopixel.Strip = neopixel.create(DigitalPin.P0, 104, NeoPixelMode.RGB)
 radio.setGroup(22)
-let mode = 7
-let NR_OF_MODES = 10
-let MODE_SNOWFLAKE = 0
-let MODE_FADE_COLORS = 1
-let MODE_SPARKLE = 2
-let MODE_RAINBOW = 3
-let MODE_CAROUSEL = 4
-let MODE_DROPLET = 5
-let MODE_SINGLE_FLASH = 6
-let MODE_SPOTLIGHTS = 7
-let MODE_SEPARATED = 8
-let MODE_ANIMATED_SEPARATED = 9
+let mode = 1
+let NR_OF_MODES = 11
+let MODE_OFF = 0
+let MODE_SEPARATED = 1
+let MODE_SNOWFLAKE = 2
+let MODE_FADE_COLORS = 3
+let MODE_SPARKLE = 4
+let MODE_RAINBOW = 5
+let MODE_CAROUSEL = 6
+let MODE_DROPLET = 7
+let MODE_SINGLE_FLASH = 8
+let MODE_SPOTLIGHTS = 9
+let MODE_ANIMATED_SEPARATED = 10
+// separated lights mode
+let separatedColor = [100, 100, 100]
+let separatedSpace = 5
 // snowflake mode vars
 let snowflakeLength = 128
 let snowflakeCounter = 0
@@ -60,9 +64,6 @@ let spotlightColorList = [[35, 77, 32], [54, 128, 45], [119, 171, 89], [201, 223
 let spotlightDelay = 1
 let spotlightCounter = 0
 let spotlightPeriod = 25
-// separated lights mode
-let separatedColor = [30, 100, 30]
-let separatedSpace = 5
 // animated separated lights mode
 let aniSeparatedColor = [240, 230, 220]
 let aniSeparatedSpace = 1
@@ -202,7 +203,11 @@ let spotlightColorList = [[100, 100, 100], [15, 50, 15], [75, 50, 75], [30, 100,
     */
 })
 while (true) {
-    if (mode == MODE_SNOWFLAKE) {
+    if (mode == MODE_OFF) {
+        strip.clear()
+        strip.show()
+        basic.pause(2)
+    } else if (mode == MODE_SNOWFLAKE) {
         strip.clear()
         pos = snowflakeCounter
         if (snowflakeCounter > strip.length() + snowflakeLength) {
