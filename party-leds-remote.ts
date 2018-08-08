@@ -209,8 +209,13 @@ basic.forever(() => {
         // and max not enough to come back to the same mode.
         currentPartyMode = (currentPartyMode + 1 + Math.random(partyModes.length - 2)) % partyModes.length
         radio.sendValue("mode", currentPartyMode + 2) // +2 because we skip modes off and separated
-        basic.showIcon(IconNames.Heart)
+        strip.clear()
+        strip.setPixelColor(0, neopixel.rgb(50,0,50))
+        strip.show()
+        basic.pause(100)
         radio.sendValue("mode", currentPartyMode + 2) // send it again
+        strip.clear()
+        strip.show()
     }
 
     // if a is pressed down
@@ -300,15 +305,25 @@ basic.forever(() => {
                         break;
                 }
             } else if (mode == MODE_PARTY) {
-                randomDelay = Math.min(randomDelay + 1, RANDOM_MAX)
+                //randomDelay = Math.min(randomDelay + 1, RANDOM_MAX)
+                let pitch = input.rotation(Rotation.Pitch)
+                pitch = Math.min(85, Math.max(0, pitch))
+                randomDelay = pins.map(
+                    pitch,
+                    85,
+                    0,
+                    5,
+                    RANDOM_MAX
+                )
+
                 basic.clearScreen()
                 if (randomDelay > 9 && randomDelay < 100) {
                     whaleysans.showNumber(randomDelay)
                 } else {
                     basic.showNumber(randomDelay, 50)
                 }
-                basic.pause(holdDelay)
-                holdDelay -= 10
+                //basic.pause(holdDelay)
+                //holdDelay -= 10
             }
         }
 
@@ -357,12 +372,15 @@ basic.forever(() => {
             basic.pause(100)
         } else {
             if(mode == MODE_OFF) {
-                basic.showString("OFF", 80);
+                basic.showIcon(IconNames.No, 80)
             } else if (mode == MODE_ON) {
                 basic.clearScreen()
                 basic.showString(onSettings[currentOnSetting], 50)
             } else if(mode == MODE_PARTY) {
-                basic.showString(partyModes[currentPartyMode], 80)
+                //basic.showString(partyModes[currentPartyMode], 80)
+                basic.clearScreen()
+                plotLedAt(currentPartyMode)
+                basic.pause(100)
             }
         }
     }
